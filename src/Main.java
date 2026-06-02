@@ -10,19 +10,30 @@ public class Main {
         editor.insert('l');
         editor.insert('o');
 
-        System.out.println(editor.getText());
+        System.out.println("Start: " + editor.getText());
 
         editor.moveLeft();
         editor.moveLeft();
         editor.insert('X');
 
-        System.out.println(editor.getText());
-        System.out.println("Cursor: " + editor.getCursorPosition());
+        System.out.println("After insert: " + editor.getText());
+
+        editor.undo();
+        System.out.println("After undo: " + editor.getText());
+
+        editor.redo();
+        System.out.println("After redo: " + editor.getText());
 
         editor.backspace();
-        System.out.println(editor.getText());
+        System.out.println("After backspace: " + editor.getText());
+
+        editor.undo();
+        System.out.println("Undo backspace: " + editor.getText());
 
         editor.delete();
-        System.out.println(editor.getText());
+        System.out.println("After delete: " + editor.getText());
+
+        editor.undo();
+        System.out.println("Undo delete: " + editor.getText());
     }
 }
