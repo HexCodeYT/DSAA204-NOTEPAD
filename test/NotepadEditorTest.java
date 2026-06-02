@@ -1,19 +1,29 @@
 import editor.NotepadEditor;
 import search.KMPSearch;
 
+import java.util.List;
+
 public class NotepadEditorTest {
 
     private static int passed = 0;
     private static int failed = 0;
 
     public static void main(String[] args) {
-
-        testInsert();
+        testInsertCharacters();
         testBackspace();
-        testDelete();
+        testDeleteKey();
         testCursorMovement();
-        testUndoRedo();
-        testSearch();
+        testInsertInMiddle();
+        testUndoInsert();
+        testRedoInsert();
+        testUndoBackspace();
+        testUndoDelete();
+        testUndoCursorMovement();
+        testRedoClearedAfterNewAction();
+        testKmpSingleMatch();
+        testKmpMultipleMatches();
+        testKmpNoMatch();
+        testKmpEmptyPattern();
 
         System.out.println();
         System.out.println("Passed: " + passed);
@@ -22,88 +32,145 @@ public class NotepadEditorTest {
 
     private static void assertEquals(String expected, String actual, String testName) {
         if (expected.equals(actual)) {
-            passed++;
-            System.out.println("PASS: " + testName);
+            pass(testName);
         } else {
-            failed++;
-            System.out.println("FAIL: " + testName);
-            System.out.println("Expected: " + expected);
-            System.out.println("Actual:   " + actual);
+            fail(testName, expected, actual);
         }
     }
 
-    private static void testInsert() {
+    private static void assertEquals(int expected, int actual, String testName) {
+        if (expected == actual) {
+            pass(testName);
+        } else {
+            fail(testName, String.valueOf(expected), String.valueOf(actual));
+        }
+    }
+
+    private static void assertListEquals(String expected, List<Integer> actual, String testName) {
+        if (expected.equals(actual.toString())) {
+            pass(testName);
+        } else {
+            fail(testName, expected, actual.toString());
+        }
+    }
+
+    private static void pass(String testName) {
+        passed++;
+        System.out.println("PASS: " + testName);
+    }
+
+    private static void fail(String testName, String expected, String actual) {
+        failed++;
+        System.out.println("FAIL: " + testName);
+        System.out.println("Expected: " + expected);
+        System.out.println("Actual:   " + actual);
+    }
+
+    private static NotepadEditor editorWithText(String text) {
         NotepadEditor editor = new NotepadEditor();
 
-        editor.insert('H');
-        editor.insert('i');
+        for (char c : text.toCharArray()) {
+            editor.insert(c);
+        }
 
-        assertEquals("Hi", editor.getText(), "Insert Characters");
+        return editor;
+    }
+
+    private static void testInsertCharacters() {
+        NotepadEditor editor = editorWithText("Hello");
+        assertEquals("Hello", editor.getText(), "Insert Characters");
     }
 
     private static void testBackspace() {
-        NotepadEditor editor = new NotepadEditor();
-
-        editor.insert('A');
-        editor.insert('B');
+        NotepadEditor editor = editorWithText("ABC");
         editor.backspace();
-
-        assertEquals("A", editor.getText(), "Backspace");
+        assertEquals("AB", editor.getText(), "Backspace");
     }
 
-    private static void testDelete() {
-        NotepadEditor editor = new NotepadEditor();
-
-        editor.insert('A');
-        editor.insert('B');
-        editor.insert('C');
-
+    private static void testDeleteKey() {
+        NotepadEditor editor = editorWithText("ABC");
         editor.moveLeft();
         editor.delete();
-
         assertEquals("AB", editor.getText(), "Delete Key");
     }
 
     private static void testCursorMovement() {
-        NotepadEditor editor = new NotepadEditor();
-
-        editor.insert('A');
-        editor.insert('B');
-        editor.insert('C');
-
+        NotepadEditor editor = editorWithText("ABC");
         editor.moveLeft();
-        editor.insert('X');
-
-        assertEquals("ABXC", editor.getText(), "Cursor Movement");
+        editor.moveLeft();
+        assertEquals(1, editor.getCursorPosition(), "Cursor Movement");
     }
 
-    private static void testUndoRedo() {
-        NotepadEditor editor = new NotepadEditor();
+    private static void testInsertInMiddle() {
+        NotepadEditor editor = editorWithText("HelloWorld");
 
-        editor.insert('A');
-        editor.insert('B');
+        for (int i = 0; i < 5; i++) {
+            editor.moveLeft();
+        }
+
+        editor.insert(' ');
+
+        assertEquals("Hello World", editor.getText(), "Insert In Middle");
+    }
+
+    private static void testUndoInsert() {
+        NotepadEditor editor = editorWithText("AB");
+        editor.undo();
+        assertEquals("A", editor.getText(), "Undo Insert");
+    }
+
+    private static void testRedoInsert() {
+        NotepadEditor editor = editorWithText("AB");
+        editor.undo();
+        editor.redo();
+        assertEquals("AB", editor.getText(), "Redo Insert");
+    }
+
+    private static void testUndoBackspace() {
+        NotepadEditor editor = editorWithText("ABC");
+        editor.backspace();
+        editor.undo();
+        assertEquals("ABC", editor.getText(), "Undo Backspace");
+    }
+
+    private static void testUndoDelete() {
+        NotepadEditor editor = editorWithText("ABC");
+        editor.moveLeft();
+        editor.delete();
+        editor.undo();
+        assertEquals("ABC", editor.getText(), "Undo Delete");
+    }
+
+    private static void testUndoCursorMovement() {
+        NotepadEditor editor = editorWithText("ABC");
+        editor.moveLeft();
+        editor.undo();
+        assertEquals(3, editor.getCursorPosition(), "Undo Cursor Movement");
+    }
+
+    private static void testRedoClearedAfterNewAction() {
+        NotepadEditor editor = editorWithText("AB");
 
         editor.undo();
-
-        assertEquals("A", editor.getText(), "Undo");
-
+        editor.insert('C');
         editor.redo();
 
-        assertEquals("AB", editor.getText(), "Redo");
+        assertEquals("AC", editor.getText(), "Redo Cleared After New Action");
     }
 
-    private static void testSearch() {
-        String text = "hello world hello";
+    private static void testKmpSingleMatch() {
+        assertListEquals("[6]", KMPSearch.search("hello world", "world"), "KMP Single Match");
+    }
 
-        boolean success =
-                KMPSearch.search(text, "hello").size() == 2;
+    private static void testKmpMultipleMatches() {
+        assertListEquals("[0, 12]", KMPSearch.search("hello world hello", "hello"), "KMP Multiple Matches");
+    }
 
-        if (success) {
-            passed++;
-            System.out.println("PASS: KMP Search");
-        } else {
-            failed++;
-            System.out.println("FAIL: KMP Search");
-        }
+    private static void testKmpNoMatch() {
+        assertListEquals("[]", KMPSearch.search("hello world", "java"), "KMP No Match");
+    }
+
+    private static void testKmpEmptyPattern() {
+        assertListEquals("[]", KMPSearch.search("hello world", ""), "KMP Empty Pattern");
     }
 }
