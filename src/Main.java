@@ -1,39 +1,19 @@
 import editor.NotepadEditor;
+import search.KMPSearch;
 
 public class Main {
     public static void main(String[] args) {
         NotepadEditor editor = new NotepadEditor();
 
-        editor.insert('H');
-        editor.insert('e');
-        editor.insert('l');
-        editor.insert('l');
-        editor.insert('o');
+        String input = "hello world hello java";
 
-        System.out.println("Start: " + editor.getText());
+        for (char c : input.toCharArray()) {
+            editor.insert(c);
+        }
 
-        editor.moveLeft();
-        editor.moveLeft();
-        editor.insert('X');
-
-        System.out.println("After insert: " + editor.getText());
-
-        editor.undo();
-        System.out.println("After undo: " + editor.getText());
-
-        editor.redo();
-        System.out.println("After redo: " + editor.getText());
-
-        editor.backspace();
-        System.out.println("After backspace: " + editor.getText());
-
-        editor.undo();
-        System.out.println("Undo backspace: " + editor.getText());
-
-        editor.delete();
-        System.out.println("After delete: " + editor.getText());
-
-        editor.undo();
-        System.out.println("Undo delete: " + editor.getText());
+        System.out.println("Text: " + editor.getText());
+        System.out.println("Search 'hello': " + KMPSearch.search(editor.getText(), "hello"));
+        System.out.println("Search 'java': " + KMPSearch.search(editor.getText(), "java"));
+        System.out.println("Search 'x': " + KMPSearch.search(editor.getText(), "x"));
     }
 }
